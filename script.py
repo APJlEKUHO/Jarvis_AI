@@ -2,26 +2,34 @@ import datetime
 import webbrowser
 import os
 import random
+import subprocess
+import time
+import speech_recognition as sr
+import sounddevice as sd
+import numpy as np
 
 
 class Jarvis:
     def __init__(self):
         self.name = "Jarvis"
+        self.recognizer = sr.Recognizer()
         self.commands = {
             "привет": self.hello,
             "время": self.time,
             "дата": self.date,
             "открой браузер": self.open_browser,
-            "браузер": self.open_browser,
+            "открой браузер": self.open_browser,
             "создай папку": self.create_folder,
             "случайное число": self.random_number,
             "команды": self.show_commands,
             "погода": self.weather,
             "выход": self.exit,
-            "пх": self.pron,
-            "порно": self.pron,
-            "хентай": self.pron,
-            "ютуб": self.yt,
+            "открой пх": self.pron,
+            "открой порно": self.pron,
+            "открой хентай": self.pron,
+            "открой ютуб": self.yt,
+            "открой танки блиц": self.tanks_blitz,
+            "открой танки бб": self.WOT
         }
 
     def hello(self):
@@ -34,6 +42,23 @@ class Jarvis:
     def pron(self):
         webbrowser.open("https://rt.pornhub.com")
         return "Открываю пх/порно/хентай"
+
+    def calc(self):
+        subprocess.Popen('C:\\Windows\\System32\\calc.exe')
+        return "Открываю калькулятор"
+
+    def tanks_blitz(self):
+        os.startfile("C:\\Games\\Tanki\\lgc_api.exe")
+        time.sleep(10)
+        os.startfile("C:\\Games\\Tanks_Blitz\\tanksblitz.exe")
+        return "Открываю танки блиц"
+
+    def WOT(self):
+        os.startfile("C:\\Games\\Tanki\\lgc_api.exe")
+        time.sleep(10)
+        os.startfile("C:\\Games\\Tanki\\Tanki.exe")
+        return "Открываю танки бб"
+
 
     def yt(self):
         webbrowser.open("https://www.youtube.com")
@@ -67,11 +92,30 @@ class Jarvis:
     def exit(self):
         return "До свидания!"
 
+    def listen(self):
+        fs = 16000
+        duration = 4  # seconds
+        print("Слушаю...")
+        recording = sd.rec(int(duration * fs), samplerate=fs, channels=1, dtype='int16')
+        sd.wait()
+        audio_data = sr.AudioData(recording.tobytes(), fs, 2)
+        try:
+            text = self.recognizer.recognize_google(audio_data, language='ru-RU')
+            return text.lower().strip()
+        except sr.UnknownValueError:
+            print("Не понял, повторите")
+            return None
+        except sr.RequestError:
+            print("Ошибка сети")
+            return None
+
     def run(self):
-        print(f"{self.name} запущен. Введите 'команды' для списка команд.")
+        print(f"{self.name} запущен. Говорите команды.")
 
         while True:
-            user_input = input("\nВаш запрос: ").lower().strip()
+            user_input = self.listen()
+            if user_input is None:
+                continue
 
             if user_input in self.commands:
                 result = self.commands[user_input]()
@@ -80,7 +124,7 @@ class Jarvis:
                 if user_input == "выход":
                     break
             else:
-                print("Команда не распознана. Введите 'команды' для списка.")
+                print("Команда не распознана. Скажи 'команды' для списка.")
 
 
 if __name__ == "__main__":
